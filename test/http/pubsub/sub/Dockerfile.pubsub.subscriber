@@ -1,0 +1,12 @@
+FROM golang:1.17
+
+ENV GO111MODULE=on
+ENV GOPROXY=https://goproxy.cn,direct
+
+WORKDIR /workspace
+
+ADD . /workspace
+
+ENTRYPOINT ["go"]
+
+CMD ["run", "test/http/pubsub/sub/sub.go"]

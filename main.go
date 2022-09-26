@@ -94,6 +94,6 @@ func EventHandler(ctx ofctx.Context, in []byte) (ofctx.Out, error) {
 		}
 	}
 
-	err := errors.New("Only Binding and Pubsub events are supported")
+	err := errors.New("Only Binding and Pubsub events are supported ")
 	return ctx.ReturnOnInternalError(), err
 }

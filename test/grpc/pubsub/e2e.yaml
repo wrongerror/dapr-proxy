@@ -58,9 +58,9 @@ verify:
   # verify with retry strategy
   retry:
     # max retry count
-    count: 60
+    count: 30
     # the interval between two attempts, e.g. 10s, 1m.
     interval: 10s
   cases:
-    - query: bash test/pubsub/verify.sh | yq
+    - query: bash test/grpc/pubsub/verify.sh | yq
       expected: expected.data.yaml

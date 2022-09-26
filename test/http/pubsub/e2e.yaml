@@ -62,5 +62,5 @@ verify:
     # the interval between two attempts, e.g. 10s, 1m.
     interval: 10s
   cases:
-    - query: bash test/pubsub/verify.sh | yq
+    - query: bash test/http/pubsub/verify.sh | yq
       expected: expected.data.yaml

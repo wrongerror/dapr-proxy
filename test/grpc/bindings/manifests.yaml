@@ -42,7 +42,7 @@ spec:
     spec:
       containers:
         - name: target
-          image: dapr-proxy:latest
+          image: kind-registry:5000/dapr-proxy:latest
           imagePullPolicy: IfNotPresent
           env:
             - name: FUNC_CONTEXT
@@ -112,7 +112,7 @@ spec:
     spec:
       containers:
         - name: target
-          image: bindings_e2e_target:latest
+          image: kind-registry:5000/bindings_e2e_target:latest
           imagePullPolicy: IfNotPresent
           env:
             - name: FUNC_CONTEXT
@@ -191,7 +191,7 @@ spec:
     spec:
       containers:
         - name: sender
-          image: dapr-proxy:latest
+          image: kind-registry:5000/dapr-proxy:latest
           imagePullPolicy: IfNotPresent
           env:
             - name: FUNC_CONTEXT
@@ -265,7 +265,7 @@ spec:
     spec:
       containers:
         - name: sender
-          image: bindings_e2e_sender:latest
+          image: kind-registry:5000/bindings_e2e_sender:latest
           imagePullPolicy: IfNotPresent
           env:
             - name: FUNC_CONTEXT

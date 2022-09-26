@@ -32,19 +32,24 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     name: E2E Tests
-    strategy:
-      matrix:
-        case:
-          - name: Bindings HTTP e2e test
-            e2e: "test/http/bindings/e2e.yaml"
-          - name: Pubsub HTTP e2e test
-            e2e: "test/http/pubsub/e2e.yaml"
-          - name: Bindings GRPC e2e test
-            e2e: "test/grpc/bindings/e2e.yaml"
-          - name: Pubsub GRPC e2e test
-            e2e: "test/grpc/pubsub/e2e.yaml"
     steps:
-      - uses: actions/checkout@v2
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.18.x
+
+      - uses: actions/cache@v2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Create kind cluster
+        uses: container-tools/kind-action@v1
 
       - name: install yq
         env:
@@ -54,10 +59,59 @@ jobs:
           wget https://github.com/mikefarah/yq/releases/download/${VERSION}/${BINARY}.tar.gz -O - |\
           tar xz && mv ${BINARY} /usr/local/bin/yq
 
-      - uses: apache/skywalking-infra-e2e@main
-        with:
-          e2e-file: ${{matrix.case.e2e}}
+      - name: Install dependent components
+        run: |
+          # Install Dapr
+          dapr -v || (wget -q https://raw.githubusercontent.com/dapr/cli/master/install/install.sh -O - | /bin/bash)
+          dapr init -k --runtime-version 1.8.3 --log-as-json --wait --timeout 600
+          # Install kafka
+          helm repo add strimzi https://strimzi.io/charts/
+          helm install kafka-operator -n default strimzi/strimzi-kafka-operator
+          kubectl apply -f test/function-kafka-quick.yaml
 
-      - name: Cleanup
+      - name: Build and Push dapr-proxy image
+        run: |
+          docker build . -t kind-registry:5000/dapr-proxy:latest -f Dockerfile --build-arg GOPROXY="https://proxy.golang.org"
+          docker push kind-registry:5000/dapr-proxy:latest
+
+      - name: Build and Push bindings image
+        run: |
+          docker build -t kind-registry:5000/bindings_e2e_sender:latest -f test/grpc/bindings/sender/Dockerfile.bindings.sender .
+          docker push kind-registry:5000/bindings_e2e_sender:latest
+          
+          docker build -t kind-registry:5000/bindings_e2e_target:latest -f test/grpc/bindings/target/Dockerfile.bindings.target .
+          docker push kind-registry:5000/bindings_e2e_target:latest
+
+      - name: Build and Push pubsub image
+        run: |
+          docker build -t kind-registry:5000/pubsub_e2e_publisher:latest -f test/grpc/pubsub/pub/Dockerfile.pubsub.publisher .
+          docker push kind-registry:5000/pubsub_e2e_publisher:latest
+          
+          docker build -t kind-registry:5000/pubsub_e2e_subscriber:latest -f test/grpc/pubsub/sub/Dockerfile.pubsub.subscriber .
+          docker push kind-registry:5000/pubsub_e2e_subscriber:latest
+
+      - name: Bindings HTTP e2e test
+        run: |
+          chmod +x "${GITHUB_WORKSPACE}/.github/workflows/e2e-test.sh"
+          bash "${GITHUB_WORKSPACE}"/.github/workflows/e2e-test.sh bindings_http
+
+      - name: Pubsub HTTP e2e test
+        run: |
+          chmod +x "${GITHUB_WORKSPACE}/.github/workflows/e2e-test.sh"
+          bash "${GITHUB_WORKSPACE}"/.github/workflows/e2e-test.sh pubsub_http
+
+      - name: Bindings GRPC e2e test
+        run: |
+          chmod +x "${GITHUB_WORKSPACE}/.github/workflows/e2e-test.sh"
+          bash "${GITHUB_WORKSPACE}"/.github/workflows/e2e-test.sh bindings_grpc
+
+      - name: Pubsub GRPC e2e test
+        run: |
+          chmod +x "${GITHUB_WORKSPACE}/.github/workflows/e2e-test.sh"
+          bash "${GITHUB_WORKSPACE}"/.github/workflows/e2e-test.sh pubsub_grpc
+
+      - name: Output debug info
         if: ${{ failure() }}
-        run: e2e cleanup -c ${{matrix.case.e2e}}
+        run: |
+          chmod +x "${GITHUB_WORKSPACE}/.github/workflows/output.sh"
+          bash "${GITHUB_WORKSPACE}"/.github/workflows/output.sh

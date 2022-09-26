@@ -42,7 +42,7 @@ spec:
     spec:
       containers:
         - name: sub
-          image: dapr-proxy:latest
+          image: kind-registry:5000/dapr-proxy:latest
           env:
             - name: FUNC_CONTEXT
               value: |
@@ -112,7 +112,7 @@ spec:
     spec:
       containers:
         - name: sub
-          image: pubsub_e2e_subscriber:latest
+          image: kind-registry:5000/pubsub_e2e_subscriber:latest
           env:
             - name: FUNC_CONTEXT
               value: |
@@ -191,7 +191,7 @@ spec:
     spec:
       containers:
         - name: pub
-          image: dapr-proxy:latest
+          image: kind-registry:5000/dapr-proxy:latest
           env:
             - name: FUNC_CONTEXT
               value: |
@@ -264,7 +264,7 @@ spec:
     spec:
       containers:
         - name: pub
-          image: pubsub_e2e_publisher:latest
+          image: kind-registry:5000/pubsub_e2e_publisher:latest
           env:
             - name: FUNC_CONTEXT
               value: |

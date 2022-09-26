@@ -45,6 +45,14 @@ setup:
           label-selector: app=bindings-target
           for: condition=Ready
 
+    - name: proxy logs
+      command: |
+        kubectl logs --tail=2 -l app="bindings-target-proxy" -c target
+
+    - name: proxy logs
+      command: |
+        kubectl logs --tail=2 -l app="bindings-target" -c target
+
   timeout: 30m
 
 cleanup:

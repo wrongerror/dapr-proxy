@@ -107,5 +107,4 @@ case $1 in
   pubsub_grpc)
     verify_pubsub_grpc
     ;;
-
 esac
